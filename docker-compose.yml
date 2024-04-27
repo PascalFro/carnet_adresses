@@ -1,0 +1,59 @@
+
+services:
+
+    mysql:
+        image: mysql
+        container_name: db_carnet_adresses
+        restart: always
+        volumes:
+            - "db-data:/var/lib/mysql"
+        ports:
+        - 3307:3306
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+            MYSQL_USER: root
+        networks:
+            - carnet_adresses
+
+    phpmyadmin:
+        image: phpmyadmin
+        container_name: phpmyadmin_carnet_adresses
+        restart: always
+        depends_on:
+            - mysql
+        ports:
+            - 8080:80
+        environment:
+            PMA_HOST: mysql
+        networks:
+            - carnet_adresses
+
+    maildev:
+        image: maildev/maildev
+        container_name: maildev_carnet_adresses
+        command: bin/maildev --web 80 --smtp 25 --hide-extensions STARTTLS
+        ports:
+          - "8081:80"
+        restart: always
+        networks:
+            - carnet_adresses
+
+    www:
+        build: ./php
+        container_name: php8.3-apache_carnet_adresses
+        ports:
+          - "8742:80"
+        links:
+        - mysql:mysql
+        volumes:
+            - ./php/vhosts:/etc/apache2/sites-enabled
+            - ./:/var/www/
+        restart: always
+        networks:
+            - carnet_adresses
+
+networks:
+    carnet_adresses:
+
+volumes:
+    db-data:
